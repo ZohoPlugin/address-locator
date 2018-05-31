@@ -1,0 +1,158 @@
+   // Note: the custom function should have "record_id" parameter
+
+leadids = input.lead.get("Leads.ID").toList("|||");
+
+map = map();
+
+locationDetails = {};
+
+names = {};
+
+for each index number in leadids
+
+{
+
+// getting record info from Leads or Quotes using the record_id
+
+leadobj = zoho.crm.getRecordById("Leads", (leadids.get(number)).toLong());
+
+        // getting address info from leadobj
+
+city = leadobj.get("City");
+
+street = leadobj.get("Street");
+
+zipCode = leadobj.get("Zip Code");
+
+if ((zipCode == null) || (zipCode == ""))
+
+{
+
+zipCode = "";
+
+}
+
+if (!isNull(city))
+
+{
+
+           // calling the Google Map API for the given address
+
+mapUrl = "http://maps.googleapis.com/maps/api/geocode/json?address=";
+
+if (!isNull(street))
+
+{
+
+mapUrl = mapUrl + street + "," + city + "," + zipCode;
+
+}
+
+else
+
+{
+
+mapUrl = mapUrl + city + "," + zipCode;
+
+}
+
+latitudeLongitude = postUrl(mapUrl, map);
+
+            // get lead name, company and address to show on map
+
+if (!isNull(leadobj.get("First Name")))
+
+{
+
+firstName = leadobj.get("First Name").replaceAll(" ","%20");
+
+}
+
+else
+
+{
+
+firstName = "";
+
+}
+
+lastName = leadobj.get("Last Name").replaceAll(" ","%20");
+
+Company = leadobj.get("Company").replaceAll(" ","%20");
+
+if (Company.contains(","))
+
+{
+
+Company = Company.replaceAll(",","%2C");
+
+}
+
+if (!isNull(leadobj.get("City")))
+
+{
+
+cityz = leadobj.get("City").replaceAll(" ","%20");
+
+}
+
+else
+
+{
+
+cityz = "";
+
+}
+
+if (!isNull(leadobj.get("Street")))
+
+{
+
+streetz = leadobj.get("Street").replaceAll(" ","%20");
+
+}
+
+else
+
+{
+
+streetz = "";
+
+}
+
+            // get the latitude and longitude values from latitudeLongitude postURL response
+
+longitude = latitudeLongitude.executeXPath("/root/results/geometry/location/lng/text()").toList("-|-");
+
+latitude = latitudeLongitude.executeXPath("/root/results/geometry/location/lat/text()").toList("-|-");
+
+            // add the latitude and longitude values in locationDetails jsonobject
+
+locationDetails.add(((latitude.get(0)) + "&") + longitude.get(0));
+
+names.add(firstName + "%20" + lastName + "%20-%20" + Company + "%20-%20" + streetz + "%20" + cityz);
+
+}
+
+}
+
+    // check for locationDetails size. If size is 0, then return the error message.
+
+if (locationDetails.size() == 0)
+
+{
+
+return "Please specify Address Information to Locate Leads";
+
+}
+
+else{
+
+openUrl(((("http://marketplace.zwidgets.com/map/locate.html?address=") + locationDetails) + "&names=") + names, "Same window");
+
+return "";
+
+}
+
+ 
+
